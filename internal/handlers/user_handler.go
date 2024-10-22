@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"trygo/internal/requests"
 	"trygo/internal/services"
+	"trygo/pkg/transform"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,13 +34,20 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUser(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
 	user, err := h.userService.GetUserByID(uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": user})
+
+	userResponse := transform.UserToResponse(user)
+	c.JSON(http.StatusOK, gin.H{"data": userResponse})
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
